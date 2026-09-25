@@ -1,1 +1,1 @@
-"""0-1 module stubs; not wired in base."""
+"""Feature modules. ceiling_border is wired into the estimate service."""

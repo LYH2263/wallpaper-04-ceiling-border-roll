@@ -16,3 +16,13 @@ def get_wall(wid: int):
         return dict(row) if row else None
     finally:
         conn.close()
+
+
+def update_corners(wid: int, corners: int) -> bool:
+    conn = connect()
+    try:
+        cur = conn.execute("UPDATE walls SET corners=? WHERE id=?", (int(corners), wid))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()

@@ -1,5 +1,7 @@
 from app.db import connect
 
+DEFAULT_BORDER_SEGMENT_LEN = "0.5"
+
 
 def init_db():
     conn = connect()
@@ -7,6 +9,7 @@ def init_db():
         """
         CREATE TABLE IF NOT EXISTS walls(
             id INTEGER PRIMARY KEY, name TEXT, perimeter REAL, height REAL,
+            corners INTEGER DEFAULT 0,
             data_quality TEXT DEFAULT 'clean', note TEXT DEFAULT ''
         );
         CREATE TABLE IF NOT EXISTS rolls(
@@ -20,13 +23,16 @@ def init_db():
         );
         """
     )
+    wall_cols = [r["name"] for r in conn.execute("PRAGMA table_info(walls)").fetchall()]
+    if "corners" not in wall_cols:
+        conn.execute("ALTER TABLE walls ADD COLUMN corners INTEGER DEFAULT 0")
     if conn.execute("SELECT COUNT(*) c FROM walls").fetchone()["c"] == 0:
         conn.executemany(
-            "INSERT INTO walls(name,perimeter,height,data_quality,note) VALUES (?,?,?,?,?)",
+            "INSERT INTO walls(name,perimeter,height,corners,data_quality,note) VALUES (?,?,?,?,?,?)",
             [
-                ("主卧一圈", 16.0, 2.7, "clean", ""),
-                ("大花匹配", 20.0, 2.8, "clean", "需对花"),
-                ("脏数据-零周长", 0.0, 2.7, "dirty", "周长为0"),
+                ("主卧一圈", 16.0, 2.7, 4, "clean", ""),
+                ("大花匹配", 20.0, 2.8, 4, "clean", "需对花"),
+                ("脏数据-零周长", 0.0, 2.7, 0, "dirty", "周长为0"),
             ],
         )
         conn.executemany(
@@ -38,5 +44,9 @@ def init_db():
             ],
         )
         conn.execute("INSERT INTO settings(key,value) VALUES ('unit','roll')")
-        conn.commit()
+    conn.execute(
+        "INSERT OR IGNORE INTO settings(key,value) VALUES ('border_segment_len',?)",
+        (DEFAULT_BORDER_SEGMENT_LEN,),
+    )
+    conn.commit()
     conn.close()
