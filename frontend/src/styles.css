@@ -7,3 +7,8 @@ body { margin: 0; font-family: Georgia, serif; background: #faf3e8; }
 .strip { width: 14px; background: linear-gradient(#c49a6c, #8b5a2b); border-radius: 2px 2px 0 0; }
 .roll-chip { display: inline-block; margin: 0.25rem; padding: 0.5rem; background: #fff; border: 1px dashed #6b4226; }
 .warn { color: #a00; }
+.muted { color: #8a7a68; }
+.ceiling-box { border: 1px solid #c9b48f; border-radius: 6px; margin: 0.75rem 0; padding: 0.5rem 0.9rem; max-width: 640px; }
+.ceiling-box label { margin-right: 1rem; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid #d9c7a8; padding: 0.3rem 0.7rem; }

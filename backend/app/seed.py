@@ -1,5 +1,11 @@
 from app.db import connect
 
+from app.repositories.settings_repo import CEILING_SEGMENT_KEY, DEFAULT_CEILING_SEGMENT_LEN
+
+
+def _has_column(conn, table: str, column: str) -> bool:
+    return any(r["name"] == column for r in conn.execute(f"PRAGMA table_info({table})").fetchall())
+
 
 def init_db():
     conn = connect()
@@ -20,13 +26,16 @@ def init_db():
         );
         """
     )
+    # 旧库迁移：墙面默认角数。
+    if not _has_column(conn, "walls", "corner_count"):
+        conn.execute("ALTER TABLE walls ADD COLUMN corner_count INTEGER")
     if conn.execute("SELECT COUNT(*) c FROM walls").fetchone()["c"] == 0:
         conn.executemany(
-            "INSERT INTO walls(name,perimeter,height,data_quality,note) VALUES (?,?,?,?,?)",
+            "INSERT INTO walls(name,perimeter,height,data_quality,note,corner_count) VALUES (?,?,?,?,?,?)",
             [
-                ("主卧一圈", 16.0, 2.7, "clean", ""),
-                ("大花匹配", 20.0, 2.8, "clean", "需对花"),
-                ("脏数据-零周长", 0.0, 2.7, "dirty", "周长为0"),
+                ("主卧一圈", 16.0, 2.7, "clean", "", 4),
+                ("大花匹配", 20.0, 2.8, "clean", "需对花", 4),
+                ("脏数据-零周长", 0.0, 2.7, "dirty", "周长为0", 4),
             ],
         )
         conn.executemany(
@@ -38,5 +47,10 @@ def init_db():
             ],
         )
         conn.execute("INSERT INTO settings(key,value) VALUES ('unit','roll')")
-        conn.commit()
+    # 默认每角段长（新库与旧库均确保存在；事后修改只影响新单）。
+    conn.execute(
+        "INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)",
+        (CEILING_SEGMENT_KEY, str(DEFAULT_CEILING_SEGMENT_LEN)),
+    )
+    conn.commit()
     conn.close()

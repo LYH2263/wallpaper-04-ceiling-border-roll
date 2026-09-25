@@ -16,3 +16,14 @@ def get_wall(wid: int):
         return dict(row) if row else None
     finally:
         conn.close()
+
+
+def update_corner_count(wid: int, corners: int) -> bool:
+    """存默认角数，返回墙是否存在。"""
+    conn = connect()
+    try:
+        cur = conn.execute("UPDATE walls SET corner_count=? WHERE id=?", (corners, wid))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
